@@ -51,9 +51,9 @@ impl Game {
     }
 
     fn minimum_necessary(&self) -> Colors {
-        let min_red = *self.results.iter().map(|c| c.red).max().get_or_insert(0);
-        let min_green = *self.results.iter().map(|c| c.green).max().get_or_insert(0);
-        let min_blue = *self.results.iter().map(|c| c.blue).max().get_or_insert(0);
+        let min_red = self.results.iter().map(|c| c.red).max().unwrap_or(0);
+        let min_green = self.results.iter().map(|c| c.green).max().unwrap_or(0);
+        let min_blue = self.results.iter().map(|c| c.blue).max().unwrap_or(0);
         Colors {
             red: min_red,
             green: min_green,
@@ -65,15 +65,16 @@ impl Game {
 impl FromStr for Game {
     type Err = anyhow::Error;
     fn from_str(s: &str) -> Result<Self> {
-        let game_parts: Vec<&str> = s.split(": ").collect();
-        println!("{game_parts:?}");
-        let id = game_parts[0]
-            .split_ascii_whitespace()
-            .nth(1)
-            .ok_or_else(|| anyhow!("Each game needs a number."))?
+        let game_parts: (&str, &str) = s.split_once(": ").context("Each line needs two parts.")?;
+        let id = game_parts
+            .0
+            .split_once(' ')
+            .context("Each game needs a number.")?
+            .1
             .parse()
             .context(anyhow!("Each game needs a number."))?;
-        let results = game_parts[1]
+        let results = game_parts
+            .1
             .split("; ")
             .map(|c| c.parse().expect(&format!("Invalid colors: {c}")))
             .collect();
@@ -102,15 +103,13 @@ fn part2(games: &Vec<Game>) {
     println!("{res}")
 }
 
-pub fn compute() {
+pub fn compute() -> Result<()> {
     let text = fs::read_to_string("inputs/day02.txt").expect("expected readable file");
     let games = text
         .lines()
-        .map(|l| {
-            l.parse::<Game>()
-                .expect(&format!("Line {l} is not a valid game!"))
-        })
-        .collect();
+        .map(|l| l.parse::<Game>())
+        .collect::<Result<Vec<Game>>>()?;
     part1(&games);
     part2(&games);
+    Ok(())
 }
