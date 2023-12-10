@@ -3,13 +3,12 @@ use std::{collections::HashSet, fs};
 fn parse_input(text: &str) -> Vec<(usize, usize)> {
     text.lines()
         .enumerate()
-        .map(|(y, l)| {
+        .flat_map(|(y, l)| {
             l.chars()
                 .enumerate()
                 .filter(|(_, c)| *c == '#')
                 .map(move |(x, _)| (x, y))
         })
-        .flatten()
         .collect()
 }
 
