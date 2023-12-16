@@ -1,6 +1,6 @@
 use std::fs;
 
-fn map_numbers(s: String) -> Vec<u32> {
+fn map_numbers(s: String, ignore_words: bool) -> Vec<u32> {
     let mut res: Vec<(usize, u32)> = s
         .chars()
         .enumerate()
@@ -12,37 +12,35 @@ fn map_numbers(s: String) -> Vec<u32> {
             }
         })
         .collect();
-    let nums = vec![
-        ("one", 1 as u32),
-        ("two", 2),
-        ("three", 3),
-        ("four", 4),
-        ("five", 5),
-        ("six", 6),
-        ("seven", 7),
-        ("eight", 8),
-        ("nine", 9),
-    ];
-    let mut ind: Vec<(usize, u32)> = nums
-        .iter()
-        .map(|n| s.match_indices(n.0).map(|m| (m.0, n.1)))
-        .flatten()
-        .collect();
+    if !ignore_words {
+        let nums = vec![
+            ("one", 1 as u32),
+            ("two", 2),
+            ("three", 3),
+            ("four", 4),
+            ("five", 5),
+            ("six", 6),
+            ("seven", 7),
+            ("eight", 8),
+            ("nine", 9),
+        ];
+        let mut ind: Vec<(usize, u32)> = nums
+            .iter()
+            .map(|n| s.match_indices(n.0).map(|m| (m.0, n.1)))
+            .flatten()
+            .collect();
 
-    res.append(&mut ind);
+        res.append(&mut ind);
+    }
     res.sort();
     res.iter().map(|t| t.1).collect()
 }
 
-pub fn compute() {
-    let lines = fs::read_to_string("inputs/day01.txt").expect("");
-    //let lines = "eighthreeight";
-    let parsed_lines: Vec<Vec<u32>> = lines
+fn value(text: &str, ignore_words: bool) -> u32 {
+    let parsed_lines: Vec<Vec<u32>> = text
         .lines()
-        .map(|l| map_numbers(l.to_string()))
-        //.map(|l| l.to_string())
+        .map(|l| map_numbers(l.to_string(), ignore_words))
         .collect();
-    println!("{parsed_lines:?}");
     let vals: Vec<u32> = parsed_lines
         .into_iter()
         .map(|l| {
@@ -51,7 +49,25 @@ pub fn compute() {
             10 * v + v2
         })
         .collect();
-    //println!("{vals:?}");
     let res: u32 = vals.iter().sum();
+    res
+}
+
+fn part1(text: &str) {
+    let res = value(&text, true);
+
     println!("{res}")
+}
+
+fn part2(text: &str) {
+    let res = value(&text, false);
+
+    println!("{res}")
+}
+
+pub fn compute() {
+    let text = fs::read_to_string("inputs/day01.txt").expect("");
+
+    part1(&text);
+    part2(&text);
 }
