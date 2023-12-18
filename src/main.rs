@@ -12,6 +12,7 @@ mod day11;
 mod day12;
 mod day13;
 mod day14;
+mod day15;
 
 use clap::Parser;
 
@@ -38,6 +39,7 @@ fn main() {
         12 => day12::compute(),
         13 => day13::compute(),
         14 => day14::compute(),
+        15 => day15::compute(),
         _ => panic!("Invalid Day!"),
     }
 }
