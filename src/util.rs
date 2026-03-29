@@ -50,7 +50,5 @@ pub fn lcm(n1: usize, n2: usize) -> usize {
         rem = x % y;
     }
 
-    let lcm = n1 * n2 / y;
-
-    lcm
+    n1 * n2 / y
 }
