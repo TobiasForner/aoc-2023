@@ -2,9 +2,10 @@ use anyhow::{bail, Context, Error, Result};
 
 use std::{
     collections::{HashMap, VecDeque},
-    fs,
     str::FromStr,
 };
+
+use crate::util;
 
 #[derive(Debug)]
 struct Part {
@@ -360,7 +361,7 @@ fn part2(text: &str) -> Result<()> {
 }
 
 pub fn compute() {
-    let text = fs::read_to_string("inputs/day19.txt").expect("expected readable file");
+    let text = util::read_input_file(19).unwrap();
     let res1 = part1(&text);
     if res1.is_err() {
         println!("{res1:?}");

@@ -1,12 +1,11 @@
 use anyhow::Result;
 use itertools::Itertools;
 
-use crate::util::{Direction, Graph};
+use crate::util::{self, Direction, Graph};
 
 use std::{
     collections::{HashMap, HashSet},
     fmt::Debug,
-    fs,
     hash::Hash,
     vec,
 };
@@ -349,7 +348,7 @@ fn part2(text: &str) -> Result<()> {
 }
 
 pub fn compute() {
-    let text = fs::read_to_string("inputs/day17.txt").expect("expected readable file");
+    let text = util::read_input_file(17).unwrap();
     //let _ = part1(&text);
     let _ = part2(&text);
 }

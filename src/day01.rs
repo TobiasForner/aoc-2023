@@ -1,4 +1,4 @@
-use std::fs;
+use crate::util;
 
 fn map_numbers(s: String, ignore_words: bool) -> Vec<u32> {
     let mut res: Vec<(usize, u32)> = s
@@ -66,7 +66,7 @@ fn part2(text: &str) {
 }
 
 pub fn compute() {
-    let text = fs::read_to_string("inputs/day01.txt").expect("");
+    let text = util::read_input_file(1).unwrap();
 
     part1(&text);
     part2(&text);

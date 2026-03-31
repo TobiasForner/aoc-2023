@@ -1,10 +1,8 @@
 use anyhow::{anyhow, bail, Context, Result};
 use logos::{Lexer, Logos};
-use std::{
-    collections::{HashMap, HashSet, VecDeque},
-    fs,
-    str::FromStr,
-};
+use std::{collections::HashMap, str::FromStr};
+
+use crate::util;
 
 fn parse_map(lex: &mut Lexer<Token>) -> Option<(String, String)> {
     let txt = lex.slice();
@@ -212,7 +210,7 @@ fn part2(text: &str) {
 }
 
 pub fn compute() {
-    let text = fs::read_to_string("inputs/day05.txt").expect("expected readable file");
+    let text = util::read_input_file(5).unwrap();
     part1(&text);
     part2(&text);
 }

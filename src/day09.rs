@@ -1,5 +1,7 @@
 use anyhow::{bail, Result};
-use std::{fs, ops::IndexMut};
+use std::ops::IndexMut;
+
+use crate::util;
 
 fn parse_input(text: &str) -> Result<Vec<Vec<i64>>> {
     text.lines()
@@ -70,7 +72,7 @@ fn part2(text: &str) -> Result<()> {
 }
 
 pub fn compute() {
-    let text = fs::read_to_string("inputs/day09.txt").expect("expected readable file");
+    let text = util::read_input_file(9).unwrap();
     let _ = part1(&text);
     let _ = part2(&text);
 }

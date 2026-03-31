@@ -3,9 +3,10 @@ use itertools::Itertools;
 use std::{
     collections::HashSet,
     fmt::{Display, Formatter},
-    fs,
     str::FromStr,
 };
+
+use crate::util;
 #[derive(Debug)]
 struct Pattern {
     pattern: Vec<Vec<char>>,
@@ -138,7 +139,7 @@ fn part2(text: &str) -> Result<()> {
 }
 
 pub fn compute() {
-    let text = fs::read_to_string("inputs/day13.txt").expect("expected readable file");
+    let text = util::read_input_file(13).unwrap();
     let _ = part1(&text);
     let _ = part2(&text);
 }

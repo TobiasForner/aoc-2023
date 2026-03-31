@@ -1,9 +1,10 @@
 use anyhow::Result;
 use std::{
     collections::{HashMap, HashSet},
-    fs,
     str::FromStr,
 };
+
+use crate::util;
 
 #[derive(Debug, Clone)]
 struct Card {
@@ -76,7 +77,7 @@ fn part2(text: &str) {
 }
 
 pub fn compute() {
-    let text = fs::read_to_string("inputs/day04.txt").expect("expected readable file");
+    let text = util::read_input_file(4).unwrap();
     part1(&text);
     part2(&text);
 }

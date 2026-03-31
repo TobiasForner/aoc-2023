@@ -1,8 +1,6 @@
 use anyhow::{bail, Context, Result};
-use std::{
-    collections::{HashSet, VecDeque},
-    fs,
-};
+
+use crate::util;
 
 fn exits(p: &(usize, usize), map: &Vec<Vec<char>>) -> Result<HashSet<(usize, usize)>> {
     let mut res = HashSet::new();
@@ -262,7 +260,7 @@ fn part2(text: &str) -> Result<()> {
 }
 
 pub fn compute() {
-    let text = fs::read_to_string("inputs/day10.txt").expect("expected readable file");
+    let text = util::read_input_file(10).unwrap();
     let res1 = part1(&text);
     if res1.is_err() {
         println!("{res1:?}");

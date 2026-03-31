@@ -1,5 +1,7 @@
 use anyhow::{Context, Result};
-use std::{collections::HashMap, fs};
+use std::collections::HashMap;
+
+use crate::util;
 
 fn parse_input(text: &str, repeat: usize) -> Result<Vec<Line>> {
     let res = text
@@ -256,7 +258,7 @@ fn part2(text: &str) -> Result<()> {
 }
 
 pub fn compute() {
-    let text = fs::read_to_string("inputs/day12.txt").expect("expected readable file");
+    let text = util::read_input_file(12).unwrap();
     let res1 = part1(&text);
     if res1.is_err() {
         println!("{res1:?}");

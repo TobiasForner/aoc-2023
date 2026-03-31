@@ -1,7 +1,7 @@
 use anyhow::{Context, Result};
 use itertools::Itertools;
 
-use std::{collections::HashSet, fs, ops::Index};
+use crate::util;
 
 fn parse_input(text: &str) -> Vec<Vec<u32>> {
     text.split(',')
@@ -83,7 +83,7 @@ fn part2(text: &str) -> Result<()> {
 }
 
 pub fn compute() {
-    let text = fs::read_to_string("inputs/day15.txt").expect("expected readable file");
+    let text = util::read_input_file(15).unwrap();
     let _ = part1(&text);
     let _ = part2(&text);
 }

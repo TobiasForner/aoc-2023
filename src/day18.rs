@@ -3,12 +3,11 @@ use itertools::Itertools;
 
 use std::{
     collections::{HashSet, VecDeque},
-    fs,
     ops::Index,
     str::FromStr,
 };
 
-use crate::util::Direction;
+use crate::util::{self, Direction};
 
 #[derive(Clone, Debug)]
 struct Trench {
@@ -424,6 +423,7 @@ fn part2(text: &str) -> Result<()> {
 
 pub fn compute() {
     let text = fs::read_to_string("inputs/day18.txt").expect("expected readable file");
+    let text = util::read_input_file(18).unwrap();
     let _ = part1(&text);
     let _ = part2(&text);
 }

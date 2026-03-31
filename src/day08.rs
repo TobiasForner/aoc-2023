@@ -1,9 +1,10 @@
 use anyhow::{anyhow, bail, Result};
 use std::{
     collections::{HashMap, HashSet},
-    fs,
     str::FromStr,
 };
+
+use crate::util;
 
 struct Line {
     src: String,
@@ -219,7 +220,7 @@ fn part2(text: &str) {
 }
 
 pub fn compute() {
-    let text = fs::read_to_string("inputs/day08.txt").expect("expected readable file");
+    let text = util::read_input_file(8).unwrap();
     part1(&text);
     part2(&text);
 }

@@ -4,11 +4,10 @@ use itertools::{Diff, Itertools};
 use std::{
     collections::{HashMap, HashSet, VecDeque},
     fmt::Debug,
-    fs,
     ops::IndexMut,
 };
 
-use crate::util::lcm;
+use crate::util::{self, lcm};
 
 #[derive(Debug, Clone)]
 enum Module {
@@ -419,7 +418,7 @@ fn lassos(text: &str) {
 }
 
 pub fn compute() {
-    let text = fs::read_to_string("inputs/day20.txt").expect("expected readable file");
+    let text = util::read_input_file(20).unwrap();
     lassos(&text);
 
     //let _ = part1(&text);

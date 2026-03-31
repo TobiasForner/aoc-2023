@@ -1,6 +1,7 @@
 use anyhow::{anyhow, bail, Context, Result};
-use std::fs;
 use std::str::FromStr;
+
+use crate::util;
 
 struct Colors {
     red: u32,
@@ -104,7 +105,7 @@ fn part2(games: &Vec<Game>) {
 }
 
 pub fn compute() -> Result<()> {
-    let text = fs::read_to_string("inputs/day02.txt").expect("expected readable file");
+    let text = util::read_input_file(2).unwrap();
     let games = text
         .lines()
         .map(|l| l.parse::<Game>())

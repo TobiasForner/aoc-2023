@@ -1,3 +1,4 @@
+use anyhow::{Context, Result};
 use std::collections::HashMap;
 use std::fmt::Debug;
 use std::hash::Hash;
@@ -29,6 +30,11 @@ impl<N: Hash + Eq + Clone + Debug> Graph<N> {
             self.edges.insert(start, vec);
         }
     }
+}
+
+pub fn read_input_file(day: u8) -> Result<String> {
+    std::fs::read_to_string(format!("inputs/day{day:02}.txt"))
+        .context(format!("Failed to load input file for day {day}"))
 }
 
 pub fn lcm(n1: usize, n2: usize) -> usize {

@@ -3,6 +3,8 @@ use priority_queue::PriorityQueue;
 
 use std::{cmp::Reverse, collections::HashSet};
 
+use crate::util;
+
 fn parse_input(text: &str) -> Result<(Vec<Vec<char>>, usize, usize)> {
     let map: Vec<Vec<char>> = text.lines().map(|l| l.chars().collect()).collect();
     let (start_x, start_y): (usize, usize) = map
@@ -320,7 +322,7 @@ fn _brute_force_part2(text: &str, steps: i64) -> Result<usize> {
 }
 
 pub fn compute() {
-    let text = fs::read_to_string("inputs/day21.txt").expect("expected readable file");
+    let text = util::read_input_file(21).unwrap();
     let _ = part1(&text);
     let _ = part2(&text, 26501365);
 }

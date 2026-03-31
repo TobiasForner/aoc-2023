@@ -1,6 +1,8 @@
 use anyhow::Result;
 
-use std::{collections::HashSet, fs};
+use std::collections::HashSet;
+
+use crate::util;
 
 fn parse_input(text: &str) -> Vec<Vec<char>> {
     text.lines().map(|l| l.chars().collect()).collect()
@@ -202,7 +204,7 @@ fn part2(text: &str) -> Result<()> {
 }
 
 pub fn compute() {
-    let text = fs::read_to_string("inputs/day14.txt").expect("expected readable file");
+    let text = util::read_input_file(14).unwrap();
     let _ = part1(&text);
     let _ = part2(&text);
 }

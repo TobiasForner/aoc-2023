@@ -1,9 +1,8 @@
 use anyhow::{bail, Context, Result};
 
-use std::{
-    collections::{HashSet, VecDeque},
-    fs,
-};
+use std::collections::{HashSet, VecDeque};
+
+use crate::util;
 
 fn parse_input(text: &str) -> Result<Vec<Vec<GridPosition>>> {
     text.lines()
@@ -180,7 +179,7 @@ fn part2(text: &str) -> Result<()> {
 }
 
 pub fn compute() {
-    let text = fs::read_to_string("inputs/day16.txt").expect("expected readable file");
+    let text = util::read_input_file(16).unwrap();
     let _ = part1(&text);
     let _ = part2(&text);
 }
