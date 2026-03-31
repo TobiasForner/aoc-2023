@@ -5,7 +5,6 @@ use crate::util;
 
 fn parse_input(text: &str) -> Vec<Vec<u32>> {
     text.split(',')
-        .into_iter()
         .map(|s| s.chars().map(|c| c as u32).collect())
         .collect()
 }
@@ -69,14 +68,13 @@ fn part2(text: &str) -> Result<()> {
     let res: usize = boxes
         .into_iter()
         .enumerate()
-        .map(|(num, lenses)| {
+        .flat_map(|(num, lenses)| {
             let box_num = num + 1;
             lenses
                 .into_iter()
                 .enumerate()
                 .map(move |(ln, lens)| box_num * (ln + 1) * (lens.focal_length as usize))
         })
-        .flatten()
         .sum();
     println!("part 2: {res}");
     Ok(())

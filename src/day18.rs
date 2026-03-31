@@ -1,4 +1,4 @@
-use anyhow::{bail, Context, Error, Result};
+use anyhow::{Error, Result, bail};
 use itertools::Itertools;
 
 use std::{
@@ -73,11 +73,7 @@ impl Trench {
     }
 
     fn len(&self, hex: bool) -> i64 {
-        if hex {
-            self.hex_length
-        } else {
-            self.length
-        }
+        if hex { self.hex_length } else { self.length }
     }
 }
 
@@ -97,7 +93,7 @@ fn parse_trenches(text: &str) -> Result<Vec<Trench>> {
         .collect::<Result<Vec<Trench>>>()
 }
 
-fn compute_positions(trenches: &Vec<Trench>, hex: bool) -> Vec<(i64, i64)> {
+fn compute_positions(trenches: &[Trench], hex: bool) -> Vec<(i64, i64)> {
     let mut res = vec![];
     let mut x = 0;
     let mut y = 0;
@@ -111,7 +107,7 @@ fn compute_positions(trenches: &Vec<Trench>, hex: bool) -> Vec<(i64, i64)> {
     res
 }
 
-fn compute_trench_positions(trenches: &Vec<Trench>, hex: bool) -> Vec<(Trench, i64, i64)> {
+fn compute_trench_positions(trenches: &[Trench], hex: bool) -> Vec<(Trench, i64, i64)> {
     let mut res = vec![];
     let mut x = 0;
     let mut y = 0;
@@ -134,7 +130,7 @@ fn trench_contains_rect(
 ) -> bool {
     use Direction::*;
     let after = move_n_in_dir(start_x, start_y, &trench.dir(hex), trench.len(hex));
-    let res = match trench.dir(hex) {
+    match trench.dir(hex) {
         Up => {
             rect.is_ver_line()
                 && start_y + 1 >= rect.bottom
@@ -159,68 +155,16 @@ fn trench_contains_rect(
                 && after.0 + 1 >= rect.right
                 && start_y == rect.top
         }
-    };
-    res
+    }
 }
 
-fn is_wall(rect: &Rect, tpositions: &Vec<(Trench, i64, i64)>, hex: bool) -> bool {
-    /*if rect.left == 2 && rect.top == 5 {
-        println!("here");
-    }*/
-    let res = tpositions
+fn is_wall(rect: &Rect, tpositions: &[(Trench, i64, i64)], hex: bool) -> bool {
+    tpositions
         .iter()
-        .any(|(t, x, y)| trench_contains_rect(*x, *y, t, rect, hex));
-    //println!("{rect:?} is wall: {res}");
-    res
+        .any(|(t, x, y)| trench_contains_rect(*x, *y, t, rect, hex))
 }
 
-fn parse_input(text: &str) -> Result<Vec<Vec<char>>> {
-    let trenches = parse_trenches(text)?;
-    let positions = compute_positions(&trenches, false);
-
-    let min_x = positions.iter().map(|(x, _)| *x).min().unwrap();
-    let min_y = positions.iter().map(|(_, y)| *y).min().unwrap();
-    let res = positions
-        .into_iter()
-        .map(|(x, y)| ((x - min_x) as usize, (y - min_y) as usize))
-        .collect_vec();
-
-    let width = res.iter().map(|(x, _)| *x).max().unwrap() + 1;
-    let height = res.iter().map(|(_, y)| *y).max().unwrap() + 1;
-
-    let mut grid = (0..height)
-        .map(|_| (0..width).map(|_| '.').collect_vec())
-        .collect_vec();
-
-    let mut x = res[0].0;
-    let mut y = res[0].1;
-    grid[y][x] = '#';
-    trenches.iter().for_each(|t| {
-        (1..=t.length).for_each(|_| {
-            let tmp = move_n_in_dir(x as i64, y as i64, &t.direction, 1);
-            x = tmp.0 as usize;
-            y = tmp.1 as usize;
-            grid[y][x] = '#';
-        })
-    });
-    Ok(grid)
-}
-
-fn part1_old(text: &str) -> Result<()> {
-    let mut grid = parse_input(text)?;
-
-    mark_inner(&mut grid);
-
-    let res = grid
-        .iter()
-        .map(|l| l.iter().filter(|c| **c == '#'))
-        .flatten()
-        .count();
-    println!("part 1: {res}");
-    Ok(())
-}
-
-fn reached_by(pos: (usize, usize), map: &Vec<Vec<char>>) -> HashSet<(usize, usize)> {
+fn reached_by(pos: (usize, usize), map: &[Vec<char>]) -> HashSet<(usize, usize)> {
     let x = pos.0;
     let y = pos.1;
     let mut res = HashSet::new();
@@ -268,17 +212,16 @@ impl Rect {
     }
 }
 
-fn mark_inner(grid: &mut Vec<Vec<char>>) {
+fn mark_inner(grid: &mut [Vec<char>]) {
     let mut todo: VecDeque<(usize, usize)> = grid
         .iter()
         .enumerate()
-        .map(|(y, l)| {
+        .flat_map(|(y, l)| {
             l.iter()
                 .enumerate()
                 .filter(|(_, c)| **c == '.')
                 .map(move |(x, _)| (x, y))
         })
-        .flatten()
         .collect();
 
     let mut visited = HashSet::new();
@@ -290,7 +233,7 @@ fn mark_inner(grid: &mut Vec<Vec<char>>) {
             if visited.contains(&pos) {
                 continue;
             }
-            let next = reached_by(pos, &grid);
+            let next = reached_by(pos, grid);
             let new = next.difference(&visited);
             new.for_each(|e| to_ex.push_back(*e));
             visited.insert(pos);
@@ -300,50 +243,30 @@ fn mark_inner(grid: &mut Vec<Vec<char>>) {
             .iter()
             .any(|(x, y)| *x == 0 || *x == grid[0].len() - 1 || *y == 0 || *y == grid.len() - 1)
         {
-            //println!("{new_visited:?}");
             new_visited.iter().for_each(|(x, y)| grid[*y][*x] = '#');
         }
     }
 }
 
-fn print_map(map: &Vec<Vec<char>>) {
-    let v: Vec<String> = map.iter().map(|l| l.iter().collect::<String>()).collect();
-    let text = v.join("\n");
-    println!("{text}");
-}
-
-fn print_rects(rects: &Vec<Rect>) {
-    let text = rects.iter().map(|r| format!("{r:?}")).join("\n");
-    println!("{text}");
-}
-
 fn solve(text: &str, hex: bool) -> Result<i128> {
     let trenches = parse_trenches(text)?;
-    //println!("{trenches:?}");
     let positions = compute_positions(&trenches, hex);
-    //println!("{positions:?}");
 
     let xs = positions
         .iter()
-        .map(|(x, _)| [*x, *x + 1])
-        .flatten()
+        .flat_map(|(x, _)| [*x, *x + 1])
         .sorted()
         .unique()
         .collect_vec();
-    //let xl = xs.len();
-    //xs[xl - 1] += 1;
     let ys = positions
         .iter()
-        .map(|(_, y)| [*y, *y + 1])
-        .flatten()
+        .flat_map(|(_, y)| [*y, *y + 1])
         .sorted()
         .unique()
         .collect_vec();
-    //let yl = ys.len();
-    //ys[yl - 1] += 1;
     let mut rects = xs
         .windows(2)
-        .map(|xw| {
+        .flat_map(|xw| {
             ys.windows(2).map(|yw| Rect {
                 left: xw[0],
                 right: xw[1],
@@ -351,11 +274,10 @@ fn solve(text: &str, hex: bool) -> Result<i128> {
                 bottom: yw[1],
             })
         })
-        .flatten()
         .collect_vec();
 
     //sort rects appropriatly
-    rects.sort_by(|r1, r2| (r1.top, r1.left).cmp(&(r2.top, r2.left)));
+    rects.sort_by_key(|r| (r.top, r.left));
     let rects = rects;
 
     //print_rects(&rects);
@@ -375,11 +297,7 @@ fn solve(text: &str, hex: bool) -> Result<i128> {
             (0..width)
                 .map(|x| {
                     let pos = y * width + x;
-                    if rect_is_wall[pos] {
-                        '#'
-                    } else {
-                        '.'
-                    }
+                    if rect_is_wall[pos] { '#' } else { '.' }
                 })
                 .collect_vec()
         })
@@ -396,13 +314,12 @@ fn solve(text: &str, hex: bool) -> Result<i128> {
     let res: i128 = grid
         .iter()
         .enumerate()
-        .map(|(y, l)| {
+        .flat_map(|(y, l)| {
             l.iter()
                 .enumerate()
                 .filter(|(_, c)| **c == '#')
                 .map(move |(x, _)| (x, y))
         })
-        .flatten()
         .map(|(x, y)| rects.index(y * width + x).area())
         .sum();
 
@@ -422,7 +339,6 @@ fn part2(text: &str) -> Result<()> {
 }
 
 pub fn compute() {
-    let text = fs::read_to_string("inputs/day18.txt").expect("expected readable file");
     let text = util::read_input_file(18).unwrap();
     let _ = part1(&text);
     let _ = part2(&text);

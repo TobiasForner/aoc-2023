@@ -317,7 +317,6 @@ fn _brute_force_part2(text: &str, steps: i64) -> Result<usize> {
     println!("start_x: {start_x}");
     println!("start_y: {start_y}");
     let distances = dijkstra(start_x, start_y, &extended_map);
-    //println!("distances: {distances:?}");
     Ok(distances.reachable_in_steps(steps as usize))
 }
 

@@ -23,7 +23,11 @@ impl FromStr for Card {
             .nth(0)
             .unwrap()
             .split_ascii_whitespace()
-            .map(|n| n.trim().parse().expect(&format!("could not parse |{n}|")))
+            .map(|n| {
+                n.trim()
+                    .parse()
+                    .unwrap_or_else(|_| panic!("could not parse |{n}|"))
+            })
             .collect();
         let have = numbers
             .nth(0)
@@ -38,11 +42,7 @@ impl FromStr for Card {
 impl Card {
     fn value(&self) -> u32 {
         let count = self.have_winning_count() as u32;
-        if count > 0 {
-            2_u32.pow(count - 1)
-        } else {
-            0
-        }
+        if count > 0 { 2_u32.pow(count - 1) } else { 0 }
     }
 
     fn have_winning_count(&self) -> usize {

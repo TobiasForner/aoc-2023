@@ -1,5 +1,5 @@
-use anyhow::{bail, Context, Result};
-use itertools::{Diff, Itertools};
+use anyhow::Result;
+use itertools::Itertools;
 
 use std::{
     collections::{HashMap, HashSet, VecDeque},
@@ -13,8 +13,8 @@ use crate::util::{self, lcm};
 enum Module {
     Broadcaster(Vec<usize>), //output
     Button(Vec<usize>),
-    FlipFlop(Vec<usize>, bool),                           //output,state
-    Conjunction(Vec<usize>, HashMap<usize, bool>, usize), //output,memory,input_count
+    FlipFlop(Vec<usize>, bool),                    //output,state
+    Conjunction(Vec<usize>, HashMap<usize, bool>), //output,memory,input_count
     Stub,
 }
 
@@ -25,7 +25,7 @@ impl Module {
             Broadcaster(out) => out.push(output),
             Button(out) => out.push(output),
             FlipFlop(out, _) => out.push(output),
-            Conjunction(out, _, _) => out.push(output),
+            Conjunction(out, _) => out.push(output),
             Stub => {}
         }
     }
@@ -34,16 +34,16 @@ impl Module {
         use Module::*;
         let empty = "".to_string();
         match self {
-            Broadcaster(out) => empty,
-            Button(out) => empty,
-            FlipFlop(out, state) => {
+            Broadcaster(_) => empty,
+            Button(_) => empty,
+            FlipFlop(_, state) => {
                 if *state {
                     "t".to_string()
                 } else {
                     "f".to_string()
                 }
             }
-            Conjunction(_, memory, _) => memory
+            Conjunction(_, memory) => memory
                 .iter()
                 .sorted()
                 .map(|(_, b)| if *b { "t" } else { "f" })
@@ -57,8 +57,8 @@ impl Module {
         match self {
             Broadcaster(_) => {}
             Button(_) => {}
-            FlipFlop(out, _) => {}
-            Conjunction(out, memory, count) => {
+            FlipFlop(_, _) => {}
+            Conjunction(_, memory) => {
                 memory.insert(input, false);
             }
             Stub => {}
@@ -71,19 +71,8 @@ impl Module {
             Broadcaster(out) => out.clone(),
             Button(out) => out.clone(),
             FlipFlop(out, _) => out.clone(),
-            Conjunction(out, _, _) => out.clone(),
+            Conjunction(out, _) => out.clone(),
             Stub => vec![],
-        }
-    }
-
-    fn out_count(&self) -> usize {
-        use Module::*;
-        match self {
-            Broadcaster(out) => out.len(),
-            Button(out) => out.len(),
-            FlipFlop(out, _) => out.len(),
-            Conjunction(_, out, _) => out.len(),
-            Stub => 0,
         }
     }
 
@@ -100,7 +89,7 @@ impl Module {
                     None
                 }
             }
-            Conjunction(inp_, memory, count) => {
+            Conjunction(_, memory) => {
                 memory.insert(start, b);
                 if memory.values().all(|v| *v) {
                     Some(false)
@@ -109,16 +98,6 @@ impl Module {
                 }
             }
             Stub => None,
-        }
-    }
-
-    fn variant(&self) -> char {
-        match self {
-            Self::Broadcaster(_) => 'B',
-            Self::Button(_) => 'I',
-            Self::Conjunction(_, _, _) => 'C',
-            Self::FlipFlop(_, _) => 'F',
-            Self::Stub => 'S',
         }
     }
 }
@@ -133,7 +112,7 @@ fn parse_input(text: &str) -> Result<(Vec<Module>, HashMap<usize, String>)> {
         if let Some((name, outputs)) = l.split_once(" -> ") {
             let clean_name = module_name(name);
             module_lookup.insert(clean_name.clone(), count);
-            println!("{name}: {count}");
+            //println!("{name}: {count}");
             let module = {
                 if name == "broadcaster" {
                     modules[0].add_output(count);
@@ -141,7 +120,7 @@ fn parse_input(text: &str) -> Result<(Vec<Module>, HashMap<usize, String>)> {
                 } else if name.starts_with('%') {
                     FlipFlop(vec![], false)
                 } else if name.starts_with('&') {
-                    Conjunction(vec![], HashMap::new(), 0)
+                    Conjunction(vec![], HashMap::new())
                 } else {
                     panic!("invalid name {name}");
                 }
@@ -179,19 +158,14 @@ fn parse_input(text: &str) -> Result<(Vec<Module>, HashMap<usize, String>)> {
     Ok((modules, names))
 }
 
-fn simulate(modules: &mut Vec<Module>, names: &HashMap<usize, String>) -> (usize, usize) {
+fn simulate(modules: &mut Vec<Module>) -> (usize, usize) {
     let mut high = 0;
     let mut low = 0;
     let mut queue = VecDeque::new();
     queue.push_back((0, false, 0));
     while let Some((start, b, end)) = queue.pop_front() {
         let module = modules.index_mut(end);
-        //let def = "default".to_string();
-        //let start_name = names.get(&start).unwrap_or(&def);
-        //let def = "default".to_string();
-        //let end_name = names.get(&end).unwrap_or(&def);
         let res = module.pulses(start, b);
-        //println!("{start_name} -{b}-> {end_name}");
         if b {
             high += 1;
         } else {
@@ -216,14 +190,12 @@ fn module_name(s: &str) -> String {
 }
 
 fn part1(text: &str) -> Result<()> {
-    let (mut modules, names) = parse_input(text)?;
-    println!("{modules:?}");
+    let (mut modules, _) = parse_input(text)?;
+    //println!("{modules:?}");
     let mut high = 0;
     let mut low = 0;
-    (0..1000).for_each(|i| {
-        //println!("iter {i}");
-        let (hc, lc) = simulate(&mut modules, &names);
-        //println!("high: {hc}; low: {lc}");
+    (0..1000).for_each(|_| {
+        let (hc, lc) = simulate(&mut modules);
         high += hc;
         low += lc;
     });
@@ -232,6 +204,7 @@ fn part1(text: &str) -> Result<()> {
     Ok(())
 }
 
+/// check whether a low pulse starting at position 0 in `modules` can reach index `low_goal`
 fn simulate_part2(modules: &mut Vec<Module>, low_goal: usize) -> bool {
     let mut res = false;
     let mut queue = VecDeque::new();
@@ -243,7 +216,6 @@ fn simulate_part2(modules: &mut Vec<Module>, low_goal: usize) -> bool {
             res = true;
         }
         let res = module.pulses(start, b);
-        //println!("{start_name} -{b}-> {end_name}");
         if let Some(b) = res {
             module
                 .outputs()
@@ -255,57 +227,69 @@ fn simulate_part2(modules: &mut Vec<Module>, low_goal: usize) -> bool {
 }
 
 fn part2(text: &str) -> Result<()> {
-    let (mut modules, names) = parse_input(text)?;
-    let mut res: usize = 0;
-    let low_goal = (0..modules.len())
-        .filter_map(|i| {
-            if names.contains_key(&i) && names.get(&i).unwrap() == "xl" {
-                Some(i)
-            } else {
-                None
-            }
-        })
-        .next()
-        .unwrap();
-    loop {
-        if res % 1000 == 0 {
-            println!("{res}");
-        }
-        res += 1;
-        if simulate_part2(&mut modules, low_goal) {
-            break;
-        }
+    let (modules, names) = parse_input(text).unwrap();
+    // I found that (for my input) to reach rx with a low pulse, &df (the only pred of rx) needs to
+    // send a low pulse. df has predecessors xl, ln, xp and gp. Those for have each a single
+    // predessor, namely zp, pp, sj and rg
+    // When investigating the structure of my input I found that all of zp, pp, sj and rg are parts
+    // of the circle part of a lasso and in fact each of these lassos is only a simple circle
+    // Thus, my solution for part 3 boils down to making sure that all of these 4 are activated at
+    // the same time. This requires the lcm (least common multiple) of the circle lengths steps/
+    // button presses
+    if let Ok((start0, l0)) = pred_lasso(modules.clone(), &names, "zp".to_string(), 100010)
+        && let Ok((start1, l1)) = pred_lasso(modules.clone(), &names, "pp".to_string(), 100010)
+        && let Ok((start2, l2)) = pred_lasso(modules.clone(), &names, "sj".to_string(), 100010)
+        && let Ok((start3, l3)) = pred_lasso(modules, &names, "rg".to_string(), 100010)
+    {
+        assert_eq!(start0, 0);
+        assert_eq!(start1, 0);
+        assert_eq!(start2, 0);
+        assert_eq!(start3, 0);
+        let n1 = lcm(l0, l1);
+        let n2 = lcm(n1, l2);
+        let res = lcm(n2, l3);
+        println!("day 20 part 2: {res}");
+    } else {
+        println!("Something went wrong in day 20 part 2: Failed to compute lasso lengths!");
     }
-    println!("part 2: {res}");
     Ok(())
 }
 
+/// Return indices of predecessors of `name` in `modules`
+/// The button and broadcaster are not included
+///
+/// * `name`: name of the component
+/// * `modules`: all modules
+/// * `names`: maps indices in modules to the names of the modules
+/// * `include_end`: whether to include the index of `name` in the final result
 fn trans_inputs(
     name: String,
     modules: Vec<Module>,
     names: &HashMap<usize, String>,
     include_end: bool,
 ) -> Result<HashSet<usize>> {
-    let numbers: HashMap<String, usize> =
-        names.iter().map(|(k, v)| (v.clone(), k.clone())).collect();
+    // inverted names
+    let numbers: HashMap<String, usize> = names.iter().map(|(k, v)| (v.clone(), *k)).collect();
     let mut res = HashSet::new();
+    // start with number for name
     let num = *numbers.get(&name).unwrap();
     res.insert(num);
     let mut queue = VecDeque::new();
     queue.push_back(num);
 
     while let Some(n) = queue.pop_front() {
+        // indices of direct predecessors of n
         let prev: HashSet<usize> = modules
             .iter()
             .enumerate()
-            .filter(|(_, m)| m.outputs().iter().any(|o| *o == n))
+            .filter(|(_, m)| m.outputs().contains(&n))
             .map(|(i, _)| i)
             .collect();
-        let diff1: HashSet<usize> = prev.difference(&res).map(|n| *n).collect();
-        res.extend(diff1.clone());
-        queue.extend(diff1);
+        // newly discovered numbers
+        let diff: HashSet<usize> = prev.difference(&res).copied().collect();
+        res.extend(diff.clone());
+        queue.extend(diff);
     }
-    println!("{res:?}");
 
     let button_num = *numbers.get("button").unwrap();
     res.remove(&button_num);
@@ -314,8 +298,6 @@ fn trans_inputs(
     res.remove(&broadcast_num);
     let mut tmp = res.clone();
     tmp.remove(&num);
-    let vars: HashSet<char> = tmp.iter().map(|n| modules[*n].variant()).collect();
-    println!("{vars:?}");
     if !include_end {
         res.remove(&num);
     }
@@ -355,77 +337,39 @@ fn pred_lasso(
     names: &HashMap<usize, String>,
     name: String,
     goal_pos: usize,
-) -> Result<usize> {
-    let t1 = trans_inputs(name.clone(), modules.clone(), names, false).unwrap();
+) -> Result<(usize, usize)> {
+    let name_pred = trans_inputs(name.clone(), modules.clone(), names, false).unwrap();
 
-    let mut l1: Lasso<String> = Lasso {
+    let mut lasso: Lasso<String> = Lasso {
         states: vec![],
         start_len: None,
     };
 
-    let mut res: usize = 0;
-    /*let rx_pos = (0..modules.len())
-    .filter_map(|i| {
-        if names.contains_key(&i) && names.get(&i).unwrap() == "rx" {
-            Some(i)
-        } else {
-            None
-        }
-    })
-    .next()
-    .unwrap();*/
     let mut modules = modules.clone();
     loop {
-        let state_desc = t1
+        let state_desc = name_pred
             .iter()
             .map(|n| (*n, modules[*n].state_description()))
             .sorted()
             .map(|(_, s)| s)
             .join(";");
-        if l1.add_state(state_desc) {
+        if lasso.add_state(state_desc) {
             break;
         }
-        if res % 1000 == 0 {
-            println!("{res}");
-        }
-        res += 1;
         if simulate_part2(&mut modules, goal_pos) {
             break;
         }
     }
 
-    let sl = l1.start_len.unwrap();
-    let cl = l1.cycle_len();
+    let sl = lasso.start_len.unwrap();
+    let cl = lasso.cycle_len();
 
-    println!("{name}: {sl} {cl}");
-
-    Ok(res)
-}
-
-fn lassos(text: &str) {
-    let (modules, names) = parse_input(text).unwrap();
-    let res = pred_lasso(modules.clone(), &names, "zp".to_string(), 100010);
-    println!("{res:?}");
-
-    let res = pred_lasso(modules.clone(), &names, "pp".to_string(), 100010);
-    println!("{res:?}");
-
-    let res = pred_lasso(modules.clone(), &names, "sj".to_string(), 100010);
-    println!("{res:?}");
-
-    let res = pred_lasso(modules, &names, "rg".to_string(), 100010);
-    println!("{res:?}");
+    Ok((sl, cl))
 }
 
 pub fn compute() {
     let text = util::read_input_file(20).unwrap();
-    lassos(&text);
 
-    //let _ = part1(&text);
-    //let _ = part2(&text);
-
-    let n1 = lcm(4051, 4021);
-    let n2 = lcm(n1, 4057);
-    let res = lcm(n2, 3833);
-    println!("{res}");
+    let _ = part1(&text);
+    let _ = part2(&text);
 }

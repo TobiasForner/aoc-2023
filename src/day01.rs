@@ -14,7 +14,7 @@ fn map_numbers(s: String, ignore_words: bool) -> Vec<u32> {
         .collect();
     if !ignore_words {
         let nums = vec![
-            ("one", 1 as u32),
+            ("one", 1_u32),
             ("two", 2),
             ("three", 3),
             ("four", 4),
@@ -26,8 +26,7 @@ fn map_numbers(s: String, ignore_words: bool) -> Vec<u32> {
         ];
         let mut ind: Vec<(usize, u32)> = nums
             .iter()
-            .map(|n| s.match_indices(n.0).map(|m| (m.0, n.1)))
-            .flatten()
+            .flat_map(|n| s.match_indices(n.0).map(|m| (m.0, n.1)))
             .collect();
 
         res.append(&mut ind);
@@ -54,14 +53,12 @@ fn value(text: &str, ignore_words: bool) -> u32 {
 }
 
 fn part1(text: &str) {
-    let res = value(&text, true);
-
+    let res = value(text, true);
     println!("{res}")
 }
 
 fn part2(text: &str) {
-    let res = value(&text, false);
-
+    let res = value(text, false);
     println!("{res}")
 }
 
