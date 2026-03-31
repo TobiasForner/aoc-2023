@@ -1,4 +1,4 @@
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result, bail};
 
 use std::collections::{HashSet, VecDeque};
 
@@ -136,15 +136,14 @@ fn value_from_start_pos(pos: Position, grid: &Vec<Vec<GridPosition>>) -> usize {
         let next = p.next(&grid_position.element);
         next.iter().for_each(|p| {
             if !visited.contains(p) && p.x < grid[0].len() && p.y < grid.len() {
-                visited.insert(p.clone());
+                visited.insert(*p);
                 to_visit.push_back(*p);
             }
         });
     }
     let res: usize = grid
         .iter()
-        .map(|l| l.iter().filter(|p| p.energized))
-        .flatten()
+        .flat_map(|l| l.iter().filter(|p| p.energized))
         .count();
     res
 }

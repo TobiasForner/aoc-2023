@@ -1,4 +1,4 @@
-use anyhow::{anyhow, bail, Context, Result};
+use anyhow::{Context, Result, anyhow, bail};
 use std::str::FromStr;
 
 use crate::util;
@@ -33,7 +33,7 @@ impl FromStr for Colors {
 
 impl Colors {
     fn leq(&self, other: &Colors) -> bool {
-        return self.red <= other.red && self.green <= other.green && self.blue <= other.blue;
+        self.red <= other.red && self.green <= other.green && self.blue <= other.blue
     }
 
     fn power(&self) -> u32 {
@@ -48,7 +48,7 @@ struct Game {
 
 impl Game {
     fn possible_with(&self, colors: &Colors) -> bool {
-        return self.results.iter().all(|r| r.leq(colors));
+        self.results.iter().all(|r| r.leq(colors))
     }
 
     fn minimum_necessary(&self) -> Colors {
@@ -77,13 +77,13 @@ impl FromStr for Game {
         let results = game_parts
             .1
             .split("; ")
-            .map(|c| c.parse().expect(&format!("Invalid colors: {c}")))
+            .map(|c| c.parse().unwrap_or_else(|_| panic!("Invalid colors: {c}")))
             .collect();
         Ok(Game { id, results })
     }
 }
 
-fn part1(games: &Vec<Game>) {
+fn part1(games: &[Game]) {
     let res: u32 = games
         .iter()
         .filter(|g| {
@@ -99,7 +99,7 @@ fn part1(games: &Vec<Game>) {
     println!("{res}")
 }
 
-fn part2(games: &Vec<Game>) {
+fn part2(games: &[Game]) {
     let res: u32 = games.iter().map(|g| g.minimum_necessary().power()).sum();
     println!("{res}")
 }

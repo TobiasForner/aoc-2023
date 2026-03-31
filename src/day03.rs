@@ -16,11 +16,11 @@ enum Token {
 fn surrounding_positions(line: i64, start: i64, end: i64) -> impl Iterator<Item = (i64, i64)> {
     let around = start - 1..=end;
     let left_right = [(line, start - 1), (line, end)];
-    return around
+    around
         .clone()
         .map(move |x| (line - 1, x))
-        .chain(left_right.into_iter())
-        .chain(around.map(move |x| (line + 1, x)));
+        .chain(left_right)
+        .chain(around.map(move |x| (line + 1, x)))
 }
 
 fn part1(text: &str) {

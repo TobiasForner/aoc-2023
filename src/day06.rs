@@ -11,11 +11,7 @@ fn parse_input(text: &str) -> Result<Vec<(u64, u64)>> {
             nums.map(|n| n.parse().unwrap()).collect::<Vec<u64>>()
         })
         .collect::<Vec<Vec<u64>>>();
-    let res = vecs[0]
-        .clone()
-        .into_iter()
-        .zip(vecs[1].clone().into_iter())
-        .collect();
+    let res = vecs[0].clone().into_iter().zip(vecs[1].clone()).collect();
     Ok(res)
 }
 
@@ -43,7 +39,7 @@ fn lowest_winning(start: u64, end: u64, time: u64, dist: u64) -> Option<u64> {
                 return Some(mid);
             }
         }
-        return lowest_winning(start, mid, time, dist);
+        lowest_winning(start, mid, time, dist)
     } else {
         if start >= end {
             return None;
@@ -66,7 +62,7 @@ fn largest_winning(start: u64, end: u64, time: u64, dist: u64) -> Option<u64> {
         if start >= end {
             return Some(mid);
         }
-        return largest_winning(mid, end, time, dist);
+        largest_winning(mid, end, time, dist)
     } else {
         if start >= end {
             return None;

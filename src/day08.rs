@@ -1,4 +1,4 @@
-use anyhow::{anyhow, bail, Result};
+use anyhow::{Result, anyhow, bail};
 use std::{
     collections::{HashMap, HashSet},
     str::FromStr,
@@ -71,11 +71,7 @@ struct Lasso {
     cycle: Vec<(String, usize)>,
 }
 
-fn lasso_starting_at(
-    start_pos: String,
-    map: &HashMap<String, Line>,
-    left_right: &Vec<char>,
-) -> Lasso {
+fn lasso_starting_at(start_pos: String, map: &HashMap<String, Line>, left_right: &[char]) -> Lasso {
     let mut seen: HashSet<(String, usize)> = HashSet::new();
     let mut visits: Vec<(String, usize)> = Vec::new();
     let mut pos = start_pos;
@@ -102,13 +98,13 @@ fn lasso_starting_at(
         vec![]
     } else {
         visits.clone()[0..=split.saturating_sub(1)]
-            .into_iter()
+            .iter()
             .map(|e| e.to_owned())
             .collect()
     };
 
     let cycle = visits.clone()[split..visits.len()]
-        .into_iter()
+        .iter()
         .map(|e| e.to_owned())
         .collect();
     Lasso { start, cycle }
@@ -133,9 +129,7 @@ fn lcm(n1: usize, n2: usize) -> usize {
         rem = x % y;
     }
 
-    let lcm = n1 * n2 / y;
-
-    lcm
+    n1 * n2 / y
 }
 
 fn part2(text: &str) {
@@ -170,52 +164,13 @@ fn part2(text: &str) {
         println!("{numbers:?}");
         let mut pos = numbers[0].0 + numbers[0].2;
         let mut step = numbers[0].1;
-        for i in 1..numbers.len() {
-            let next = numbers[i];
+        numbers.iter().skip(1).for_each(|next| {
             while (pos - next.0) % next.1 != next.2 {
                 pos += step;
             }
             step = lcm(step, next.1);
-        }
+        });
         println!("part 2: {pos}");
-
-        //let l = lassos[0].clone();
-        //println!("{l:?}");
-
-        /*let mut next_end: HashMap<(String, usize), usize> = HashMap::new();
-        let mut n_steps: HashMap<(String, usize), String> = HashMap::new();
-        let mut steps = 0;
-        while !positions.iter().all(|p| p.ends_with('Z')) {
-            let lr_pos = steps % left_right.len();
-            let next_ends = positions.iter().map(|p| {
-                if let Some(s) = next_end.get(&(p.clone(), lr_pos)) {
-                    *s
-                } else {
-                    let tmp = steps_until_next_end(p.clone(), &map, &left_right, lr_pos);
-                    next_end.insert((p.clone(), lr_pos), tmp);
-                    tmp
-                }
-            });
-            let jump = next_ends.max().unwrap();
-            let new_positions = positions
-                .iter()
-                .map(|pos| {
-                    if let Some(s) = n_steps.get(&(pos.clone(), steps)) {
-                        (*s).clone()
-                    } else {
-                        let tmp = go_n_steps(pos.clone(), jump, &map, &left_right, lr_pos);
-                        n_steps.insert((pos.clone(), lr_pos), tmp.clone());
-                        tmp
-                    }
-                })
-                .collect();
-
-            steps += jump;
-            positions = new_positions;
-            let size = positions.len();
-            println!("step {steps}: {size}; {positions:?}; {jump}");
-        }
-        println!("part 2: {steps}");*/
     }
 }
 

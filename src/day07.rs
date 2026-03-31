@@ -19,7 +19,7 @@ impl FromStr for Hand {
     }
 }
 
-fn counter(v: &Vec<char>) -> HashMap<char, usize> {
+fn counter(v: &[char]) -> HashMap<char, usize> {
     let mut res = HashMap::new();
     v.iter().for_each(|c| {
         res.insert(*c, *res.get(c).get_or_insert(&0) + 1);
@@ -56,7 +56,7 @@ impl Hand {
                 return Ordering::Greater;
             }
         }
-        return Ordering::Equal;
+        Ordering::Equal
     }
 
     fn compare_joker(&self, other: &Self) -> std::cmp::Ordering {
@@ -105,7 +105,7 @@ impl Hand {
                 return Ordering::Greater;
             }
         }
-        return Ordering::Equal;
+        Ordering::Equal
     }
 }
 

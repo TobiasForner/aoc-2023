@@ -1,4 +1,4 @@
-use anyhow::{bail, Context, Error, Result};
+use anyhow::{Context, Error, Result, bail};
 
 use std::{
     collections::{HashMap, VecDeque},
@@ -198,7 +198,7 @@ fn parse_input(text: &str) -> Result<(Vec<Workflow>, Vec<Part>)> {
     text.lines().for_each(|l| {
         if l.starts_with('{') {
             parts.push(l.parse());
-        } else if l.len() > 0 {
+        } else if !l.is_empty() {
             workflows.push(l.parse());
         }
     });
@@ -295,12 +295,9 @@ impl PartRange {
     }
 }
 
-fn split_range(
-    start: u64,
-    end: u64,
-    split: u64,
-    smaller: bool,
-) -> (Option<(u64, u64)>, Option<(u64, u64)>) {
+type OptionalRange = Option<(u64, u64)>;
+
+fn split_range(start: u64, end: u64, split: u64, smaller: bool) -> (OptionalRange, OptionalRange) {
     if smaller {
         if start < split {
             let first = Some((start, (split - 1).min(end)));

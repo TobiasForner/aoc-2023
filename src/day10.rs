@@ -1,8 +1,9 @@
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result, bail};
+use std::collections::{HashSet, VecDeque};
 
 use crate::util;
 
-fn exits(p: &(usize, usize), map: &Vec<Vec<char>>) -> Result<HashSet<(usize, usize)>> {
+fn exits(p: &(usize, usize), map: &[Vec<char>]) -> Result<HashSet<(usize, usize)>> {
     let mut res = HashSet::new();
     let y = p.1;
     let x = p.0;
@@ -43,8 +44,8 @@ fn exits(p: &(usize, usize), map: &Vec<Vec<char>>) -> Result<HashSet<(usize, usi
     Ok(res)
 }
 
-fn next_position(positions: &Vec<(usize, usize)>, map: &Vec<Vec<char>>) -> Result<(usize, usize)> {
-    let mut next_cands = exits(positions.last().context("")?, &map)?;
+fn next_position(positions: &Vec<(usize, usize)>, map: &[Vec<char>]) -> Result<(usize, usize)> {
+    let mut next_cands = exits(positions.last().context("")?, map)?;
     next_cands.remove(positions.last().context("positions should not be empty")?);
     next_cands.remove(&positions[positions.len() - 2]);
     next_cands
@@ -81,13 +82,7 @@ fn part1(text: &str) -> Result<()> {
     Ok(())
 }
 
-fn print_map(map: &Vec<Vec<char>>) {
-    let v: Vec<String> = map.iter().map(|l| l.iter().collect::<String>()).collect();
-    let text = v.join("\n");
-    println!("{text}");
-}
-
-fn reached_by(pos: (usize, usize), map: &Vec<Vec<char>>) -> HashSet<(usize, usize)> {
+fn reached_by(pos: (usize, usize), map: &[Vec<char>]) -> HashSet<(usize, usize)> {
     let x = pos.0;
     let y = pos.1;
     let mut res = HashSet::new();
@@ -221,13 +216,12 @@ fn part2(text: &str) -> Result<()> {
     let mut todo: VecDeque<(usize, usize)> = map
         .iter()
         .enumerate()
-        .map(|(y, l)| {
+        .flat_map(|(y, l)| {
             l.iter()
                 .enumerate()
                 .filter(|(_, c)| **c == '.')
                 .map(move |(x, _)| (x, y))
         })
-        .flatten()
         .collect();
     let mut visited = HashSet::new();
     while let Some(pos) = todo.pop_front() {

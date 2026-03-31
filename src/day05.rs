@@ -1,4 +1,4 @@
-use anyhow::{anyhow, bail, Context, Result};
+use anyhow::{Context, Result, anyhow, bail};
 use logos::{Lexer, Logos};
 use std::{collections::HashMap, str::FromStr};
 
@@ -44,6 +44,8 @@ impl RangeMap {
     }
 }
 
+type RangeMapLookup = HashMap<(String, String), Vec<RangeMap>>;
+
 #[derive(Logos, Debug, PartialEq)]
 #[logos(skip r"[ \n]")]
 enum Token {
@@ -55,7 +57,7 @@ enum Token {
     Range(RangeMap),
 }
 
-fn map_of_maps(text: &str) -> Result<(Vec<i64>, HashMap<(String, String), Vec<RangeMap>>)> {
+fn map_of_maps(text: &str) -> Result<(Vec<i64>, RangeMapLookup)> {
     let lex = Token::lexer(text);
     let mut seeds = vec![];
     let mut range_map: HashMap<(String, String), Vec<RangeMap>> = HashMap::new();
@@ -70,13 +72,8 @@ fn map_of_maps(text: &str) -> Result<(Vec<i64>, HashMap<(String, String), Vec<Ra
                 dst = d;
             }
             Ok(Token::Range(r)) => {
-                if !range_map.contains_key(&(src.clone(), dst.clone())) {
-                    range_map.insert((src.clone(), dst.clone()), vec![]);
-                }
-                range_map
-                    .get_mut(&(src.clone(), dst.clone()))
-                    .unwrap()
-                    .push(r);
+                let ranges = range_map.entry((src.clone(), dst.clone())).or_default();
+                ranges.push(r);
             }
             Err(_) => bail!("error"),
         }
@@ -162,7 +159,7 @@ impl SeedRange {
         let mut todo = vec![self.clone()];
         for m in v {
             let tmp: (Vec<Vec<SeedRange>>, Vec<Vec<SeedRange>>) =
-                todo.iter().map(|s| s.apply_map(&m)).unzip();
+                todo.iter().map(|s| s.apply_map(m)).unzip();
             todo = tmp.1.into_iter().flatten().collect();
             res.append(&mut tmp.0.into_iter().flatten().collect());
         }
@@ -200,8 +197,7 @@ fn part2(text: &str) {
 
             seed_ranges = seed_ranges
                 .iter()
-                .map(|r| r.apply_maps(maps))
-                .flatten()
+                .flat_map(|r| r.apply_maps(maps))
                 .collect();
         });
         let res = seed_ranges.iter().map(|r| r.start).min().unwrap();

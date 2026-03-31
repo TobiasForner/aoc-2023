@@ -1,6 +1,3 @@
-from operator import ne
-
-
 def lcm(n1, n2):
     if n1 > n2:
         x = n1

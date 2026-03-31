@@ -1,4 +1,4 @@
-use anyhow::{bail, Result};
+use anyhow::Result;
 use itertools::Itertools;
 use std::{
     collections::HashSet,
@@ -92,8 +92,7 @@ impl Pattern {
     fn val_after_correction(&self) -> usize {
         let pattern = &self.pattern;
         let positions = (0..pattern.len())
-            .map(|y| (0..pattern[y].len()).map(move |x| (x, y)))
-            .flatten()
+            .flat_map(|y| (0..pattern[y].len()).map(move |x| (x, y)))
             .collect_vec();
         let old_vrl = self.vert_mirrors();
         let old_hrl = self.hor_mirrors();

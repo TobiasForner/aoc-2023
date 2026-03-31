@@ -1,5 +1,5 @@
-use anyhow::{bail, Context, Result};
-use itertools::{Diff, Itertools};
+use anyhow::Result;
+use itertools::Itertools;
 
 use std::{
     collections::{HashMap, HashSet, VecDeque},
@@ -34,9 +34,9 @@ impl Module {
         use Module::*;
         let empty = "".to_string();
         match self {
-            Broadcaster(out) => empty,
-            Button(out) => empty,
-            FlipFlop(out, state) => {
+            Broadcaster(_) => empty,
+            Button(_) => empty,
+            FlipFlop(_, state) => {
                 if *state {
                     "t".to_string()
                 } else {
@@ -57,8 +57,8 @@ impl Module {
         match self {
             Broadcaster(_) => {}
             Button(_) => {}
-            FlipFlop(out, _) => {}
-            Conjunction(out, memory, count) => {
+            FlipFlop(_, _) => {}
+            Conjunction(_, memory, _) => {
                 memory.insert(input, false);
             }
             Stub => {}
@@ -100,7 +100,7 @@ impl Module {
                     None
                 }
             }
-            Conjunction(inp_, memory, count) => {
+            Conjunction(_, memory, _) => {
                 memory.insert(start, b);
                 if memory.values().all(|v| *v) {
                     Some(false)
@@ -186,12 +186,7 @@ fn simulate(modules: &mut Vec<Module>, names: &HashMap<usize, String>) -> (usize
     queue.push_back((0, false, 0));
     while let Some((start, b, end)) = queue.pop_front() {
         let module = modules.index_mut(end);
-        //let def = "default".to_string();
-        //let start_name = names.get(&start).unwrap_or(&def);
-        //let def = "default".to_string();
-        //let end_name = names.get(&end).unwrap_or(&def);
         let res = module.pulses(start, b);
-        //println!("{start_name} -{b}-> {end_name}");
         if b {
             high += 1;
         } else {
@@ -220,10 +215,8 @@ fn part1(text: &str) -> Result<()> {
     println!("{modules:?}");
     let mut high = 0;
     let mut low = 0;
-    (0..1000).for_each(|i| {
-        //println!("iter {i}");
+    (0..1000).for_each(|_| {
         let (hc, lc) = simulate(&mut modules, &names);
-        //println!("high: {hc}; low: {lc}");
         high += hc;
         low += lc;
     });
@@ -243,7 +236,6 @@ fn simulate_part2(modules: &mut Vec<Module>, low_goal: usize) -> bool {
             res = true;
         }
         let res = module.pulses(start, b);
-        //println!("{start_name} -{b}-> {end_name}");
         if let Some(b) = res {
             module
                 .outputs()
@@ -258,17 +250,10 @@ fn part2(text: &str) -> Result<()> {
     let (mut modules, names) = parse_input(text)?;
     let mut res: usize = 0;
     let low_goal = (0..modules.len())
-        .filter_map(|i| {
-            if names.contains_key(&i) && names.get(&i).unwrap() == "xl" {
-                Some(i)
-            } else {
-                None
-            }
-        })
-        .next()
+        .find(|i| names.contains_key(i) && names.get(i).unwrap() == "xl")
         .unwrap();
     loop {
-        if res % 1000 == 0 {
+        if res.is_multiple_of(1000) {
             println!("{res}");
         }
         res += 1;
@@ -286,8 +271,7 @@ fn trans_inputs(
     names: &HashMap<usize, String>,
     include_end: bool,
 ) -> Result<HashSet<usize>> {
-    let numbers: HashMap<String, usize> =
-        names.iter().map(|(k, v)| (v.clone(), k.clone())).collect();
+    let numbers: HashMap<String, usize> = names.iter().map(|(k, v)| (v.clone(), *k)).collect();
     let mut res = HashSet::new();
     let num = *numbers.get(&name).unwrap();
     res.insert(num);
@@ -298,10 +282,10 @@ fn trans_inputs(
         let prev: HashSet<usize> = modules
             .iter()
             .enumerate()
-            .filter(|(_, m)| m.outputs().iter().any(|o| *o == n))
+            .filter(|(_, m)| m.outputs().contains(&n))
             .map(|(i, _)| i)
             .collect();
-        let diff1: HashSet<usize> = prev.difference(&res).map(|n| *n).collect();
+        let diff1: HashSet<usize> = prev.difference(&res).copied().collect();
         res.extend(diff1.clone());
         queue.extend(diff1);
     }
@@ -364,16 +348,6 @@ fn pred_lasso(
     };
 
     let mut res: usize = 0;
-    /*let rx_pos = (0..modules.len())
-    .filter_map(|i| {
-        if names.contains_key(&i) && names.get(&i).unwrap() == "rx" {
-            Some(i)
-        } else {
-            None
-        }
-    })
-    .next()
-    .unwrap();*/
     let mut modules = modules.clone();
     loop {
         let state_desc = t1
@@ -385,7 +359,7 @@ fn pred_lasso(
         if l1.add_state(state_desc) {
             break;
         }
-        if res % 1000 == 0 {
+        if res.is_multiple_of(1000) {
             println!("{res}");
         }
         res += 1;

@@ -16,22 +16,18 @@ fn part1(text: &str) -> Result<()> {
     Ok(())
 }
 
-fn value(stones: &Vec<Vec<char>>) -> usize {
+fn value(stones: &[Vec<char>]) -> usize {
     let len = stones.len();
     let res: usize = stones
-        .into_iter()
+        .iter()
         .enumerate()
-        .map(|(r, l)| {
-            l.into_iter()
-                .map(move |c| if *c == 'O' { len - r } else { 0 })
-        })
-        .flatten()
+        .flat_map(|(r, l)| l.iter().map(move |c| if *c == 'O' { len - r } else { 0 }))
         .sum();
     res
 }
 
-fn roll_north(stones: &Vec<Vec<char>>) -> Vec<Vec<char>> {
-    let mut input = stones.clone();
+fn roll_north(stones: &[Vec<char>]) -> Vec<Vec<char>> {
+    let mut input = stones.to_owned();
     for col in 0..input[0].len() {
         let mut start = input.len();
         let mut end = input.len();
@@ -39,12 +35,12 @@ fn roll_north(stones: &Vec<Vec<char>>) -> Vec<Vec<char>> {
         while start > 0 {
             start -= 1;
             if input[start][col] == '#' {
-                for i in start + 1..=start + count {
+                (start + 1..=start + count).for_each(|i| {
                     input[i][col] = 'O';
-                }
-                for i in (start + count + 1)..end {
+                });
+                ((start + count + 1)..end).for_each(|i| {
                     input[i][col] = '.';
-                }
+                });
                 end = start;
                 count = 0;
             }
@@ -53,53 +49,49 @@ fn roll_north(stones: &Vec<Vec<char>>) -> Vec<Vec<char>> {
             }
         }
         if count > 0 {
-            for i in 0..count {
-                input[i][col] = 'O';
-            }
-            for i in count..end {
+            input.iter_mut().take(count).for_each(|row| {
+                row[col] = 'O';
+            });
+            (count..end).for_each(|i| {
                 input[i][col] = '.';
-            }
+            })
         }
     }
     input
 }
 
-fn roll_west(stones: &Vec<Vec<char>>) -> Vec<Vec<char>> {
-    let mut input = stones.clone();
-    for row in 0..input.len() {
-        let mut start = input[row].len();
-        let mut end = input[row].len();
+fn roll_west(stones: &[Vec<char>]) -> Vec<Vec<char>> {
+    let mut input = stones.to_vec();
+    input.iter_mut().for_each(|row| {
+        let mut start = row.len();
+        let mut end = row.len();
         let mut count = 0;
         while start > 0 {
             start -= 1;
-            if input[row][start] == '#' {
-                for i in start + 1..=start + count {
-                    input[row][i] = 'O';
-                }
-                for i in (start + count + 1)..end {
-                    input[row][i] = '.';
-                }
+            if row[start] == '#' {
+                (start + 1..=start + count).for_each(|i| {
+                    row[i] = 'O';
+                });
+                ((start + count + 1)..end).for_each(|i| {
+                    row[i] = '.';
+                });
                 end = start;
                 count = 0;
             }
-            if input[row][start] == 'O' {
+            if row[start] == 'O' {
                 count += 1;
             }
         }
         if count > 0 {
-            for i in 0..count {
-                input[row][i] = 'O';
-            }
-            for i in count..end {
-                input[row][i] = '.';
-            }
+            row.iter_mut().take(count).for_each(|x| *x = 'O');
+            row.iter_mut().take(end).skip(count).for_each(|x| *x = '.');
         }
-    }
-    input
+    });
+    input.to_vec()
 }
 
-fn roll_south(stones: &Vec<Vec<char>>) -> Vec<Vec<char>> {
-    let mut input = stones.clone();
+fn roll_south(stones: &[Vec<char>]) -> Vec<Vec<char>> {
+    let mut input = stones.to_vec();
     for col in 0..input[0].len() {
         let mut start = 0;
         let mut end = 0;
@@ -108,12 +100,14 @@ fn roll_south(stones: &Vec<Vec<char>>) -> Vec<Vec<char>> {
             end += 1;
             if input[end - 1][col] == '#' {
                 let dot_count = end - start - count - 1;
-                for i in start..(start + dot_count).min(end - 1) {
-                    input[i][col] = '.';
-                }
-                for i in (start + dot_count)..(end - 1) {
+                input[start..(start + dot_count).min(end - 1)]
+                    .iter_mut()
+                    .for_each(|row| {
+                        row[col] = '.';
+                    });
+                ((start + dot_count)..(end - 1)).for_each(|i| {
                     input[i][col] = 'O';
-                }
+                });
                 start = end;
                 count = 0;
             } else if input[end - 1][col] == 'O' {
@@ -122,50 +116,50 @@ fn roll_south(stones: &Vec<Vec<char>>) -> Vec<Vec<char>> {
         }
         if count > 0 {
             let dot_count = end - start - count;
-            for i in start..start + dot_count {
-                input[i][col] = '.';
-            }
-            for i in start + dot_count..end {
-                input[i][col] = 'O';
-            }
+            input[start..start + dot_count].iter_mut().for_each(|row| {
+                row[col] = '.';
+            });
+            input[start + dot_count..end].iter_mut().for_each(|row| {
+                row[col] = 'O';
+            });
         }
     }
     input
 }
 
-fn roll_east(stones: &Vec<Vec<char>>) -> Vec<Vec<char>> {
-    let mut input = stones.clone();
-    for row in 0..input.len() {
+fn roll_east(stones: &[Vec<char>]) -> Vec<Vec<char>> {
+    let mut input = stones.to_vec();
+    input.iter_mut().for_each(|row| {
         let mut start = 0;
         let mut end = 0;
         let mut count = 0;
-        while end < input[row].len() {
+        while end < row.len() {
             end += 1;
-            if input[row][end - 1] == '#' {
+            if row[end - 1] == '#' {
                 let dot_count = end - start - count - 1;
-                for i in start..start + dot_count {
-                    input[row][i] = '.';
-                }
-                for i in (start + dot_count)..(end - 1) {
-                    input[row][i] = 'O';
-                }
+                (start..start + dot_count).for_each(|i| {
+                    row[i] = '.';
+                });
+                ((start + dot_count)..(end - 1)).for_each(|i| {
+                    row[i] = 'O';
+                });
                 start = end;
                 count = 0;
             }
-            if input[row][end - 1] == 'O' {
+            if row[end - 1] == 'O' {
                 count += 1;
             }
         }
         if count > 0 {
             let dot_count = end - start - count;
-            for i in start..start + dot_count {
-                input[row][i] = '.';
-            }
-            for i in start + dot_count..end {
-                input[row][i] = 'O';
-            }
+            (start..start + dot_count).for_each(|i| {
+                row[i] = '.';
+            });
+            (start + dot_count..end).for_each(|i| {
+                row[i] = 'O';
+            });
         }
-    }
+    });
     input
 }
 

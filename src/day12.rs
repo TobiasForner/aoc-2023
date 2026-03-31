@@ -4,8 +4,7 @@ use std::collections::HashMap;
 use crate::util;
 
 fn parse_input(text: &str, repeat: usize) -> Result<Vec<Line>> {
-    let res = text
-        .lines()
+    text.lines()
         .map(|l| {
             let parts = l.split_once(' ').context("")?;
             let mut elems = parts.0.to_string();
@@ -31,8 +30,7 @@ fn parse_input(text: &str, repeat: usize) -> Result<Vec<Line>> {
                 last_hash,
             })
         })
-        .collect();
-    res
+        .collect()
 }
 
 #[derive(Debug)]
@@ -66,7 +64,7 @@ impl Line {
         if lpos >= line.len() && npos >= self.nums.len() {
             return 1;
         } else if npos >= self.nums.len() {
-            if line[lpos..line.len()].iter().any(|c| *c == '#') {
+            if line[lpos..line.len()].contains(&'#') {
                 return 0;
             }
             return 1;
@@ -80,7 +78,7 @@ impl Line {
             if self.can_have_n_hashes(rem, lpos) {
                 self.combinations_from(lpos + rem + 1, npos + 1)
             } else {
-                return 0;
+                0
             }
         } else {
             // question mark
@@ -93,15 +91,12 @@ impl Line {
                 0
             };
 
-            //println!("{lpos}; {npos}; {count1}; {count2}");
-            return count1 + count2;
+            count1 + count2
         }
     }
 
     fn combinations(&mut self) -> u128 {
-        let res = self.combinations_from(0, 0);
-        //println!("{self:?}; {res}");
-        return res;
+        self.combinations_from(0, 0)
     }
 
     fn can_have_n_hashes_lookup(
@@ -111,7 +106,7 @@ impl Line {
         n_lookup: &mut HashMap<(usize, usize), bool>,
     ) -> bool {
         if let Some(b) = n_lookup.get(&(n, lpos)) {
-            return *b;
+            *b
         } else {
             let b = {
                 if lpos + n > self.line.len()
@@ -159,9 +154,8 @@ impl Line {
         c_lookup: &mut HashMap<(usize, usize), u128>,
         nnd: &mut HashMap<usize, usize>,
     ) -> u128 {
-        //println!("call {lpos} {npos}");
         if let Some(n) = c_lookup.get(&(lpos, npos)) {
-            return *n;
+            *n
         } else {
             let n;
             let line = &self.line;
@@ -214,7 +208,6 @@ impl Line {
                     n = count1 + count2;
                 }
             };
-            //println!("{lpos},{npos}: {n}");
             c_lookup.insert((lpos, npos), n);
             n
         }
@@ -226,9 +219,7 @@ impl Line {
         c_lookup: &mut HashMap<(usize, usize), u128>,
         nnd: &mut HashMap<usize, usize>,
     ) -> u128 {
-        let res = self.combinations_from_lookup(0, 0, n_lookup, c_lookup, nnd);
-        //println!("{self:?}; {res}");
-        return res;
+        self.combinations_from_lookup(0, 0, n_lookup, c_lookup, nnd)
     }
 }
 

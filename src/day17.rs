@@ -7,7 +7,6 @@ use std::{
     collections::{HashMap, HashSet},
     fmt::Debug,
     hash::Hash,
-    vec,
 };
 
 trait DomGen {
@@ -22,14 +21,14 @@ trait DomGen {
 
 impl<N: DomGen + Hash + Eq + Clone + Debug> Graph<N> {
     fn dijkstra(&self, source: N, part2: bool) -> HashMap<N, usize> {
-        let mut unvisited: HashSet<N> = self.edges.keys().map(|n| n.clone()).collect();
+        let mut unvisited: HashSet<N> = self.edges.keys().cloned().collect();
         let mut distances = HashMap::new();
         distances.insert(source.clone(), 0);
         let mut current = source;
         loop {
             let len = unvisited.len();
             //println!("{len}");
-            if len % 1000 == 0 {
+            if len.is_multiple_of(1000) {
                 println!("{len}");
             }
             let cdist = *distances.get(&current).unwrap_or(&usize::MAX);
@@ -58,7 +57,7 @@ impl<N: DomGen + Hash + Eq + Clone + Debug> Graph<N> {
 
             let min_dist = unvisited
                 .iter()
-                .map(|n| (n, *distances.get(&n).unwrap_or(&usize::MAX)))
+                .map(|n| (n, *distances.get(n).unwrap_or(&usize::MAX)))
                 .min_by_key(|(_, d)| *d);
 
             if let Some((c, d)) = min_dist {
@@ -126,7 +125,7 @@ fn parse_graph(text: &str) -> Graph<Node> {
     let mut res = Graph::new();
     text.lines().enumerate().for_each(|(y, l)| {
         let height = text.lines().count();
-        let width = text.lines().nth(0).expect("msg").len();
+        let width = text.lines().next().expect("msg").len();
         l.chars().enumerate().for_each(|(x, _)| {
             // handle start
             let s = if x == 0 && y == 0 { 0 } else { 1 };
@@ -142,13 +141,7 @@ fn parse_graph(text: &str) -> Graph<Node> {
                                 direction: d1.clone(),
                                 count: c,
                             };
-                            let count = {
-                                if d1 == d2 {
-                                    c + 1
-                                } else {
-                                    1
-                                }
-                            };
+                            let count = { if d1 == d2 { c + 1 } else { 1 } };
                             let end = Node {
                                 x: endx,
                                 y: endy,
@@ -161,7 +154,7 @@ fn parse_graph(text: &str) -> Graph<Node> {
                                 .expect("")
                                 .chars()
                                 .nth(endx)
-                                .expect(&format!("Can't get {endx}th from length {width}"))
+                                .unwrap_or_else(|| panic!("Can't get {endx}th from length {width}"))
                                 .to_digit(10)
                                 .expect("Can't parse char")
                                 as usize;
@@ -202,7 +195,7 @@ fn parse_graph_part2(text: &str) -> Graph<Node> {
     let mut res = Graph::new();
     text.lines().enumerate().for_each(|(y, l)| {
         let height = text.lines().count();
-        let width = text.lines().nth(0).expect("msg").len();
+        let width = text.lines().next().expect("msg").len();
         l.chars().enumerate().for_each(|(x, _)| {
             // handle start
             if x == 0 && y == 0 {
@@ -227,19 +220,14 @@ fn parse_graph_part2(text: &str) -> Graph<Node> {
                         direction: d1.clone(),
                         count: c,
                     };
-                    let dist = {
-                        if d1 == d2 {
-                            1
-                        } else {
-                            4
-                        }
-                    };
-                    if let Some(end) = advance_by(&start, dist, d2) {
-                        if end.count <= 10 && end.x < width && end.y < height {
-                            let weight = path_weight(&start, dist, d2, &grid);
-                            //println!("{start:?}->{end:?}: {weight}");
-                            res.add_directed_edge(start, end, weight);
-                        }
+                    let dist = { if d1 == d2 { 1 } else { 4 } };
+                    if let Some(end) = advance_by(&start, dist, d2)
+                        && end.count <= 10
+                        && end.x < width
+                        && end.y < height
+                    {
+                        let weight = path_weight(&start, dist, d2, &grid);
+                        res.add_directed_edge(start, end, weight);
                     }
                 });
             })
@@ -248,7 +236,7 @@ fn parse_graph_part2(text: &str) -> Graph<Node> {
     res
 }
 
-fn path_weight(start: &Node, dist: usize, direction: &Direction, grid: &Vec<Vec<usize>>) -> usize {
+fn path_weight(start: &Node, dist: usize, direction: &Direction, grid: &[Vec<usize>]) -> usize {
     use Direction::*;
     let x = start.x;
     let y = start.y;
@@ -303,7 +291,7 @@ fn move_in_dir(x: usize, y: usize, dir: &Direction) -> (usize, usize) {
 
 fn part1(text: &str) -> Result<()> {
     let height = text.lines().count();
-    let width = text.lines().nth(0).expect("msg").len();
+    let width = text.lines().next().expect("msg").len();
     let graph = parse_graph(text);
     //println!("{graph:?}");
     let source = Node {
@@ -326,7 +314,7 @@ fn part1(text: &str) -> Result<()> {
 
 fn part2(text: &str) -> Result<()> {
     let height = text.lines().count();
-    let width = text.lines().nth(0).expect("msg").len();
+    let width = text.lines().next().expect("msg").len();
     let graph = parse_graph_part2(text);
     //println!("{graph:?}");
     let source = Node {
@@ -349,6 +337,6 @@ fn part2(text: &str) -> Result<()> {
 
 pub fn compute() {
     let text = util::read_input_file(17).unwrap();
-    //let _ = part1(&text);
+    let _ = part1(&text);
     let _ = part2(&text);
 }
