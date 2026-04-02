@@ -250,7 +250,6 @@ fn part2(text: &str) -> Result<()> {
             .iter()
             .any(|(x, y)| *x == 0 || *x == map[0].len() - 1 || *y == 0 || *y == map.len() - 1)
         {
-            //println!("{new_visited:?}");
             let dots = new_visited
                 .iter()
                 .filter(|(x, y)| map[*y][*x] == '.')
