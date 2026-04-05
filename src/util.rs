@@ -1,7 +1,9 @@
 use anyhow::{Context, Result};
 use std::collections::HashMap;
+use std::error::Error;
 use std::fmt::Debug;
 use std::hash::Hash;
+use std::str::FromStr;
 
 #[derive(Debug, Hash, PartialEq, Eq, Clone)]
 pub enum Direction {
@@ -35,6 +37,14 @@ impl<N: Hash + Eq + Clone + Debug> Graph<N> {
 pub fn read_input_file(day: u8) -> Result<String> {
     std::fs::read_to_string(format!("inputs/day{day:02}.txt"))
         .context(format!("Failed to load input file for day {day}"))
+}
+
+pub fn parse_from_text_lines<T>(text: &str) -> Result<Vec<T>, T::Err>
+where
+    T: FromStr,
+    T::Err: Send + Sync + 'static,
+{
+    text.lines().map(|l| l.parse()).collect()
 }
 
 pub fn lcm(n1: usize, n2: usize) -> usize {
