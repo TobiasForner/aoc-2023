@@ -9,7 +9,7 @@ use std::{
     hash::Hash,
 };
 
-trait DomGen {
+pub trait DomGen {
     fn dom_gen(&self) -> Vec<Self>
     where
         Self: Sized;

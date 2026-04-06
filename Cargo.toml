@@ -13,3 +13,4 @@ itertools = "0.14.0"
 priority-queue = "2.7.0"
 ndarray = "0.17.2"
 ndarray-linalg = { version = "0.18.1", features = ["openblas"] }
+random_choice = "0.3.2"

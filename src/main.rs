@@ -61,6 +61,7 @@ fn main() {
         22 => day22::compute(),
         23 => day23::compute(),
         24 => day24::compute(),
+        25 => day25::compute(),
         _ => panic!("Invalid Day!"),
     }
 }
