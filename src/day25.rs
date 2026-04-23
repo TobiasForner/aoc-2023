@@ -5,6 +5,7 @@ use std::{
 };
 
 use anyhow::Result;
+use priority_queue::PriorityQueue;
 use random_choice::random_choice;
 
 use crate::util;
@@ -131,7 +132,7 @@ impl<T: Hash + Eq + Clone + Debug> Graph<T> {
         res
     }
 
-    fn _extended_nodes(&self) -> Vec<usize> {
+    fn extended_nodes(&self) -> Vec<usize> {
         self.component_map.keys().cloned().collect()
     }
 
@@ -223,6 +224,91 @@ impl<T: Hash + Eq + Clone + Debug> Graph<T> {
         found
     }
 
+    /// returns large_set, s, t (the singleton node in the cut), weight of the cut
+    pub fn some_min_s_t_cut(&self) -> (Vec<usize>, usize, usize, usize) {
+        let mut nodes: HashSet<usize> = self.get_nodes().into_iter().collect();
+        let mut q: PriorityQueue<_, usize> = PriorityQueue::new();
+        nodes.iter().for_each(|n| {
+            q.push(*n, 0);
+        });
+        assert!(q.len() > 1);
+        let mut picked = HashSet::new();
+        let (first, _) = q.pop().unwrap();
+
+        let mut last_picked = first;
+        let mut pick = |node: usize, q: &mut PriorityQueue<usize, usize>| {
+            nodes.remove(&node);
+            picked.insert(node);
+            if let Some(adj) = self.edges.get(&node) {
+                adj.iter().for_each(|(n, w)| {
+                    // q contains all non-picked nodes
+                    if let Some((_, p)) = q.get(n) {
+                        q.change_priority(n, p + w);
+                    }
+                });
+            }
+            last_picked = node;
+        };
+        pick(first, &mut q);
+        while q.len() > 1 {
+            let (node, _) = q.pop().unwrap();
+            pick(node, &mut q);
+        }
+        let (node, p) = q.pop().unwrap();
+        (picked.into_iter().collect(), last_picked, node, p)
+    }
+
+    fn split(&self, s: &[usize], t: &[usize]) -> (Self, Self) {
+        (self.construct_subgraph(s), self.construct_subgraph(t))
+    }
+
+    fn decompose(&self, k: usize) -> Vec<Self> {
+        let mut queue = vec![self.clone()];
+        let mut done = vec![];
+        while queue.iter().any(|g| !g.edges.is_empty()) {
+            let g = queue.pop().unwrap();
+            if g.edges.is_empty() {
+                assert!(g.get_nodes().len() == 1);
+                done.push(g);
+                continue;
+            }
+            let (vs, s, t, w) = g.some_min_s_t_cut();
+            if w < k {
+                let (g1, g2) = g.split(&vs, &[t]);
+                queue.push(g1);
+                queue.push(g2);
+            } else {
+                let mut g = g.clone();
+                g.merge(s, t);
+                queue.push(g);
+            }
+        }
+        done.append(&mut queue);
+
+        done
+    }
+
+    pub fn solve(&self, k: usize) -> Vec<Self> {
+        let mut queue = vec![self.clone()];
+        let mut done = vec![];
+        while let Some(g) = queue.pop() {
+            let graphs = g.decompose(k);
+            //
+            let connected_graphs: Vec<Self> = graphs
+                .into_iter()
+                .flat_map(|g| g.get_connected_graphs().into_iter())
+                .collect();
+            if connected_graphs.len() == 1 {
+                done.push(connected_graphs[0].clone());
+            } else {
+                connected_graphs.into_iter().for_each(|g| {
+                    queue.push(g);
+                });
+            }
+        }
+        done
+    }
+
     fn get_connected_graphs(&self) -> Vec<Graph<T>> {
         let mut found = HashSet::new();
         let mut res = vec![];
@@ -264,11 +350,18 @@ fn part1_random(text: &str) -> usize {
         }
     }
 }
+fn part1_decompose(text: &str) -> usize {
+    let g = parse_input(text);
+    let parts = g.solve(4);
+    parts[0].extended_nodes().len() * parts[1].extended_nodes().len()
+}
 
 fn part1(text: &str) -> Result<()> {
     let res = part1_random(text);
+    println!("part 1 (random): {res}");
 
-    println!("part 1: {res}");
+    let res = part1_decompose(text);
+    println!("part 1 (decompose): {res}");
     Ok(())
 }
 
