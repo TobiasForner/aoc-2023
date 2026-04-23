@@ -1,6 +1,5 @@
 use anyhow::{Context, Result};
 use std::collections::HashMap;
-use std::error::Error;
 use std::fmt::Debug;
 use std::hash::Hash;
 use std::str::FromStr;
